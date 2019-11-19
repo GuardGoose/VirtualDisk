@@ -26,6 +26,7 @@
 
 #define UNUSED        -1
 #define ENDOFCHAIN     0
+#define DIR 		   1
 // Compiler complained
 // #define EOF           -1
 
