@@ -53,20 +53,6 @@ void writeblock ( diskblock_t * block, int block_address )
    //printf ( "writeblock> virtualdisk[%d] = %s / %d\n", block_address, virtualDisk[block_address].data, (int)virtualDisk[block_address].data ) ;
 }
 
-void copyFat(fatentry_t * FAT, unsigned int numOfFatBlocks)
-{
-	diskblock_t block;	
-	unsigned int index = 0;
-	for (unsigned int i = 1; i <= numOfFatBlocks; i++)
-	{
-		for (unsigned int j = 0; j < FATENTRYCOUNT; j++)
-		{
-			block.fat[j] = FAT[index];
-			++index;
-		}
-		writeblock(&block, i);
-	}
-}
 
 /* read and write FAT
  * 
@@ -86,48 +72,29 @@ void copyFat(fatentry_t * FAT, unsigned int numOfFatBlocks)
 
 /* implement format()
  */
-void format (char * disk_name)
+void format ( )
 {
-	diskblock_t block;
-	unsigned int i = 1;
-	for (i = 0; i < BLOCKSIZE; i++)
-	{
-		block.data[i] = '\0';
-	}
-	// This copies a block of memory
-	memcpy(block.data, disk_name, strlen(disk_name));
-	writeblock(&block, 0);
-	FAT[0] = ENDOFCHAIN;
-	// unsigned so it's only positive
-	unsigned int numOfFatBlocks;
-	numOfFatBlocks = (unsigned int)(MAXBLOCKS + (FATENTRYCOUNT - 1)) / FATENTRYCOUNT;
-	for (i = 1; i < numOfFatBlocks; i++)
-	{
-		FAT[i] = i + 1;
-	}
-	FAT[numOfFatBlocks] = ENDOFCHAIN; // End of FAT table
-	FAT[numOfFatBlocks + 1] = ENDOFCHAIN; // root
-	for (i = numOfFatBlocks + 2; i < MAXBLOCKS; i++)
-	{
-		FAT[i] = UNUSED;
-	}
-	copyFat(FAT, numOfFatBlocks);
-	diskblock_t rootBlock;
-	rootBlock.dir.isdir = TRUE;
-	rootBlock.dir.nextEntry = FALSE;
-	rootDirIndex = numOfFatBlocks + 1;
-	currentDirIndex = numOfFatBlocks + 1;
-	direntry_t emptyDir;
-	emptyDir.isdir = TRUE;
-	emptyDir.unused = TRUE;
-	emptyDir.filelength = 0;
-	memcpy(emptyDir.name, "empty directory", strlen("empty directory"));
-	for (i = 0; i < DIRENTRYCOUNT; i++)
-	{
-		rootBlock.dir.entrylist[i] = emptyDir;
-	}
-	writeblock(&rootBlock, (int)rootDirIndex);
+   diskblock_t block ;
+   direntry_t  rootDir ;
+   int         pos             = 0 ;
+   int         fatentry        = 0 ;
+   int         fatblocksneeded =  (MAXBLOCKS / FATENTRYCOUNT ) ;
+
+   /* prepare block 0 : fill it with '\0',
+    * use strcpy() to copy some text to it for test purposes
+	* write block 0 to virtual disk
+	*/
+
+	/* prepare FAT table
+	 * write FAT blocks to virtual disk
+	 */
+
+	 /* prepare root directory
+	  * write root directory block to virtual disk
+	  */
+
 }
+
 
 /* use this for testing
  */

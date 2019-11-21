@@ -53,7 +53,7 @@ void writeblock ( diskblock_t * block, int block_address )
    //printf ( "writeblock> virtualDisk[%d] = %s / %d\n", block_address, virtualDisk[block_address].data, (int)virtualDisk[block_address].data ) ;
 }
 
-void copyFat(fatentry_t *FAT, unsigned int numOfFatBlocks)
+void copyFat(fatentry_t * FAT, unsigned int numOfFatBlocks)
 {
 	diskblock_t block;
 	unsigned int i, j, index = 0;
@@ -97,6 +97,7 @@ void format (char * disk_name)
 	memcpy(block.data, disk_name, strlen(disk_name));
 	writeblock(&block, 0);
 	FAT[0] = ENDOFCHAIN;
+	// unsigned so it's only positive
 	unsigned int numOfFatBlocks;
 	numOfFatBlocks = (unsigned int)(MAXBLOCKS + (FATENTRYCOUNT - 1)) / FATENTRYCOUNT;
 	for (i = 1; i < numOfFatBlocks; i++)
