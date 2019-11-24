@@ -111,22 +111,7 @@ void format (char * disk_name)
 	{
 		FAT[i] = UNUSED;
 	}
-	copyFat(FAT, numOfFatBlocks);
-	diskblock_t rootBlock;
-	rootBlock.dir.isdir = TRUE;
-	rootBlock.dir.nextEntry = FALSE;
-	rootDirIndex = numOfFatBlocks + 1;
-	currentDirIndex = numOfFatBlocks + 1;
-	direntry_t emptyDir;
-	emptyDir.isdir = TRUE;
-	emptyDir.unused = TRUE;
-	emptyDir.filelength = 0;
-	memcpy(emptyDir.name, "empty directory", strlen("empty directory"));
-	for (i = 0; i < DIRENTRYCOUNT; i++)
-	{
-		rootBlock.dir.entrylist[i] = emptyDir;
-	}
-	writeblock(&rootBlock, (int)rootDirIndex);
+	//copyFat(FAT, numOfFatBlocks);
 }
 
 /* use this for testing

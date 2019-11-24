@@ -26,7 +26,8 @@
 
 #define UNUSED        -1
 #define ENDOFCHAIN     0
-#define DIR 		   1
+#define DIR 		       1
+#define DATA           0
 // Compiler complained
 // #define EOF           -1
 
@@ -94,10 +95,12 @@ extern diskblock_t virtualDisk [ MAXBLOCKS ] ;
 // created in the opening program
 
 typedef struct filedescriptor {
+   int         pos ;           // byte within a block
    char        mode[3] ;
-   fatentry_t  blockno ;           // block no
-   int         pos     ;           // byte within a block
-   diskblock_t buffer  ;
+   Byte        writing ;
+   fatentry_t  blockno ;
+   int         filelength ;
+   diskblock_t buffer ;
 } MyFILE ;
 
 

@@ -5,7 +5,7 @@
 #include "filesys.h"
 
 void cgsD(){
-  format("CS3026 Operating Systems Assessment 2019");
+  format("CS3026 Operating Systems Assessment");
   writedisk("virtualdiskD3_D1\0");
 }
 
