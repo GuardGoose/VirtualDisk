@@ -312,7 +312,6 @@ MyFILE * myfopen(char * name,const char mode)
   currentDir = &virtualDisk[currentDirIndex].dir.entrylist[dirEntryIndex];
   memcpy(&file->buffer, &virtualDisk[file->blockno], BLOCKSIZE);
   return file;
-
 }
 
 int myfclose(MyFILE *file)

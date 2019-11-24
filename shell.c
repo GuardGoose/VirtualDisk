@@ -7,7 +7,7 @@
 MyFILE * myfopen(char * name, const char mode);
 int myfputc(char a, MyFILE * stream);
 char myfgetc(MyFILE * stream);
-int myfclose(MyFILE * file);
+int myfclose(MyFILE *file);
 
 
 
@@ -19,9 +19,9 @@ void cgsD()
 
 void cgsC()
 {
-	MyFILE * myFile = myfopen("testfile.txt", 'w');
+	MyFILE *myFile = myfopen("testfile.txt", 'w');
 	char string[] = "4096bytes";
-	for (int i = 0; i < 4 * BLOCKSIZE; i++)
+	for (int i = 0; i < 4 * BLOCKSIZE; ++i)
 	{
 		myfputc('A', myFile);
 	}
