@@ -84,7 +84,7 @@ void copyFat(fatentry_t *FAT)
 }
 
 void format (char * disk){
-   diskblock_t block ;
+   diskblock_t block;
    int i = 1;
    for (i = 0; i < BLOCKSIZE; i++){
      block.data[i] = '\0';
@@ -133,25 +133,26 @@ int getFreeBlock()
   return -1;
 }
 
-diskblock_t initBlock(int index, const char type)
-{
+diskblock_t initBlock(int index, const char type, int parentDirBlock, int parentDirEntry){
   diskblock_t block;
   if(type == DIR)
   {
     block.dir.isdir = TRUE;
     block.dir.nextEntry = 0;
-    direntry_t *newEntry = malloc(sizeof(direntry_t));
+    block.dir.parentDirBlock = parentDirBlock;
+    block.dir.parentDirEntry = parentDirEntry;
+    direntry_t *newEntry = calloc(1, sizeof(direntry_t));
     newEntry->unused = TRUE;
     newEntry->filelength = 0;
-    for(int i = 0; i < DIRENTRYCOUNT; i ++){
-      memcpy(&block.dir.entryList[i], newEntry, DIRENTRYCOUNT);
+    for(int i = 0; i < DIRENTRYCOUNT; i ++)
+    {
+      memmove(&block.dir.entryList[i], newEntry, sizeof(direntry_t));
     }
     free(newEntry);
   }
   else
   {
-    for (int i = 0; i < BLOCKSIZE; i++) 
-    {
+    for (int i = 0; i < BLOCKSIZE; i++) {
       block.data[i] = '\0';
     }
   }
@@ -245,7 +246,7 @@ int myfputc(char a, MyFILE * stream)
     {
       return 1;
     }
-    diskblock_t newBlock = initBlock(index, DATA);
+    diskblock_t newBlock = initBlock(index, DATA, 0, 0);
     memcpy(&stream->buffer, &newBlock, BLOCKSIZE);
     FAT[stream->blockno] = index;
     FAT[index] = ENDOFCHAIN;
@@ -258,16 +259,169 @@ int myfputc(char a, MyFILE * stream)
   return 0;
 }
 
-MyFILE * myfopen(char * name,const char mode){
+direntry_t *initDirEntry(char *name, const char type, int firstBlockIndex)
+{
+  FAT[firstBlockIndex] = ENDOFCHAIN; 
+  for (int i = 0; i < DIRENTRYCOUNT; i++)
+  {
+    if (virtualDisk[currentDirIndex].dir.entryList[i].unused == TRUE)
+    {
+      virtualDisk[currentDirIndex].dir.entryList[i].unused = FALSE;
+      virtualDisk[currentDirIndex].dir.entryList[i].isdir = type;
+      initBlock(firstBlockIndex, type, currentDirIndex, i);
+      memset(&virtualDisk[currentDirIndex].dir.entryList[i].name, '\0', MAXNAME);
+      strcpy(virtualDisk[currentDirIndex].dir.entryList[i].name, name);
+      virtualDisk[currentDirIndex].dir.entryList[i].firstBlock = firstBlockIndex;
+      currentDir = &virtualDisk[currentDirIndex].dir.entryList[i];
+      copyFat(FAT);
+      return &virtualDisk[currentDirIndex].dir.entryList[i];
+    }
+    if (i == 2)
+    {
+      i = -1;
+      int newBlockIndex = getFreeBlock();
+      if(newBlockIndex == -1)
+      {
+        return NULL;
+      }
+      initBlock(newBlockIndex, DIR, virtualDisk[currentDirIndex].dir.parentDirBlock, virtualDisk[currentDirIndex].dir.parentDirEntry);
+      FAT[currentDirIndex] = newBlockIndex;
+      FAT[newBlockIndex] = ENDOFCHAIN;
+      virtualDisk[currentDirIndex].dir.nextEntry = newBlockIndex;
+      currentDirIndex = newBlockIndex;
+    }
+  }
+}
+
+int mymkdir(char *path)
+{
+  const char parser[2] = "/";
+  char * pathCopy = malloc(strlen(path));
+  strcpy(pathCopy, path);
+  char *token = strtok(pathCopy, parser);
+  if (pathCopy[0] != '/')
+  {
+    currentDirIndex = currentDir->firstBlock;
+  }
+  currentDirIndex = rootDirIndex;
+  while (token != NULL)
+  {
+    int firstIndex = findEntryIndex(token);
+    if (firstIndex > -1)
+    {
+      currentDirIndex = virtualDisk[currentDirIndex].dir.entryList[firstIndex].firstBlock;
+    }
+    else
+    {
+      int freeBlock = getFreeBlock();
+      initDirEntry(token, DIR, freeBlock);
+    }
+    token = strtok(NULL, parser);
+  }
+  free(pathCopy);
+  return 0;
+}
+
+char **mylistdir(char *path){
+  const char parser[2] = "/";
+  char * pathCopy = malloc(strlen(path));
+  strcpy(pathCopy, path);
+  int i = 0;
+  char *p = &path[0];
+  char relativePath = 0;
+  for (i=0; p[i]; p[i]=='/' ? i++ : *p++);
+  p = NULL;
+  char *token = strtok(pathCopy,parser);
+  int tempIndex = currentDirIndex;
+  char **myList = calloc(30,sizeof(char *));
+  if (pathCopy[0] != '/')
+  {
+    relativePath = 1;
+    currentDirIndex = currentDir->firstBlock;
+  }
+  if (!relativePath){
+    currentDirIndex = rootDirIndex;
+  }
+  while (token != NULL)
+  {
+    i--;
+    int dirFirstIndex = findEntryIndex(token);
+    if (dirFirstIndex > -1){
+      int firstBlockOfDirBlock = virtualDisk[currentDirIndex].dir.entryList[dirFirstIndex].firstBlock;
+      int j;
+      while (FAT[currentDirIndex] != UNUSED)
+      {
+        for (i = 0; i < DIRENTRYCOUNT; i++)
+        {
+          if (virtualDisk[firstBlockOfDirBlock].dir.entryList[i].name[0] != '\0')
+          {
+            myList[j] = malloc(strlen(virtualDisk[firstBlockOfDirBlock].dir.entryList[i].name));
+            strcpy(myList[j], virtualDisk[firstBlockOfDirBlock].dir.entryList[i].name);
+            ++j;
+          }else{
+            currentDirIndex = tempIndex;
+            free(pathCopy);
+            return myList;
+          }
+        }
+        currentDirIndex = FAT[currentDirIndex];
+      }
+      currentDirIndex = tempIndex;
+      free(pathCopy);
+      return myList;
+    }else{
+      free(pathCopy);
+      return NULL;
+    }
+    token = strtok(NULL, parser);
+  }
+  int dirFirstIndex = findEntryIndex(path);
+  if (dirFirstIndex > -1){
+    int firstBlockOfDirBlock = virtualDisk[currentDirIndex].dir.entryList[dirFirstIndex].firstBlock;
+    int j;
+    while (FAT[currentDirIndex] != UNUSED)
+    {
+      for (i = 0; i < DIRENTRYCOUNT; i++)
+      {
+        if (virtualDisk[firstBlockOfDirBlock].dir.entryList[i].name[0] != '\0'){
+          myList[j] = malloc(strlen(virtualDisk[firstBlockOfDirBlock].dir.entryList[i].name));
+          strcpy(myList[j], virtualDisk[firstBlockOfDirBlock].dir.entryList[i].name);
+          ++j;
+        }
+        else
+        {
+          currentDirIndex = tempIndex;
+          free(pathCopy);
+          return myList;
+        }
+      }
+      currentDirIndex = FAT[currentDirIndex];
+    }
+    currentDirIndex = tempIndex;
+    free(pathCopy);
+    return myList;
+  }
+  else
+  {
+    currentDirIndex = tempIndex;
+    free(pathCopy);
+    return NULL;
+  }
+  free(pathCopy);
+  return 0;
+}
+
+MyFILE * myfopen(char * name,const char mode)
+{
   if(mode == 'w')
   {
     myRm(name);
     int index = getFreeBlock();
     FAT[index] = ENDOFCHAIN;
-    int i;
-    for(i = 0; i < DIRENTRYCOUNT; i++)
+    for(int i = 0; i < DIRENTRYCOUNT; i++)
     {
-      if (virtualDisk[currentDirIndex].dir.entryList[i].unused == TRUE){
+      if (virtualDisk[currentDirIndex].dir.entryList[i].unused == TRUE)
+      {
         virtualDisk[currentDirIndex].dir.entryList[i].unused = FALSE;
         strcpy(virtualDisk[currentDirIndex].dir.entryList[i].name, name);
         virtualDisk[currentDirIndex].dir.entryList[i].firstBlock = index;
@@ -283,7 +437,7 @@ MyFILE * myfopen(char * name,const char mode){
     //printf("when opened file length is %d\n", file->filelength);
     strcpy(file->mode, &mode);
     file->blockno = index;
-    memmove (&file->buffer, &virtualDisk[index], BLOCKSIZE );
+    memmove(&file->buffer, &virtualDisk[index], BLOCKSIZE );
     copyFat(FAT);
     return file;
   }

@@ -66,6 +66,8 @@ typedef struct direntry {
 typedef struct dirblock {
    int isdir ;
    int nextEntry ;
+   int parentDirBlock ;
+   int parentDirEntry ;
    direntry_t entryList [ DIRENTRYCOUNT ] ; // the first two integer are marker and endpos
 } dirblock_t ;
 

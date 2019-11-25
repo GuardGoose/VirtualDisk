@@ -8,7 +8,7 @@ MyFILE * myfopen(char * name, const char mode);
 int myfputc(char a, MyFILE * stream);
 char myfgetc(MyFILE * stream);
 int myfclose(MyFILE *file);
-
+int mymkdir(char *path);
 
 
 void cgsD()
@@ -41,6 +41,13 @@ void cgsC()
   fclose(realFile);
   writedisk("virtualdiskC3_C1\0");
 }
+
+void cgsB()
+{
+  int absolute = mymkdir("firstleve/secondlevel/mydirectory");
+  writedisk("virtualdiskB3_B1\0");
+}
+
 
 void main()
 {
