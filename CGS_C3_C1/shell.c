@@ -22,15 +22,18 @@ void cgsC()
   MyFILE *myFile = myfopen("testfile.txt", 'w');
   char string[] = "4096bytes";
   int i;
-  for (i = 0; i < 4*BLOCKSIZE; i++){
+  for (i = 0; i < 4*BLOCKSIZE; i++)
+  {
     myfputc('A', myFile);
   }
   myfclose(myFile);
   FILE *realFile = fopen("testfileC3_C1_copy.txt", "w");
   MyFILE *myFile2 = myfopen("testfile.txt", 'r');
-  while(1){
+  while(1)
+  {
     char character = myfgetc(myFile2);
-    if (character == EOF){
+    if (character == EOF)
+	{
       break;
     }
     printf("%c", character);

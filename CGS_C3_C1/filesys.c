@@ -92,8 +92,7 @@ void format (char * disk){
    memcpy(block.data, disk, strlen(disk));
    writeblock(&block, 0);
    FAT[0] = ENDOFCHAIN;
-   int numOfFatBlocks;
-   numOfFatBlocks = (MAXBLOCKS+(FATENTRYCOUNT-1))/FATENTRYCOUNT;
+   unsigned int numOfFatBlocks = (MAXBLOCKS+(FATENTRYCOUNT - 1))/FATENTRYCOUNT;
    for (i = 1; i < numOfFatBlocks; i++){
      FAT[i] = i+1;
    }
@@ -107,9 +106,9 @@ void format (char * disk){
    //call init block and get clean block
    rootBlock.dir.isdir = TRUE;
    rootBlock.dir.nextEntry = FALSE; //does not have to be if the block is zeroed
-   rootDirIndex = numOfFatBlocks+1;
-   currentDirIndex = numOfFatBlocks+1;
-   direntry_t *emptyDir = calloc(1,sizeof(direntry_t));
+   rootDirIndex = numOfFatBlocks + 1;
+   currentDirIndex = numOfFatBlocks + 1;
+   direntry_t *emptyDir = calloc(1, sizeof(direntry_t));
    emptyDir->isdir = TRUE;
    emptyDir->unused = TRUE;
    emptyDir->filelength = 0;
@@ -267,7 +266,8 @@ MyFILE * myfopen(char * name,const char mode){
     int i;
     for(i = 0; i < DIRENTRYCOUNT; i++)
     {
-      if (virtualDisk[currentDirIndex].dir.entryList[i].unused == TRUE){
+      if (virtualDisk[currentDirIndex].dir.entryList[i].unused == TRUE)
+	  {
         virtualDisk[currentDirIndex].dir.entryList[i].unused = FALSE;
         strcpy(virtualDisk[currentDirIndex].dir.entryList[i].name, name);
         virtualDisk[currentDirIndex].dir.entryList[i].firstBlock = index;
@@ -280,7 +280,6 @@ MyFILE * myfopen(char * name,const char mode){
     file->pos = 0;
     file->writing = 1;
     file->filelength = currentDir->filelength;
-    //printf("when opened file length is %d\n", file->filelength);
     strcpy(file->mode, &mode);
     file->blockno = index;
     memmove (&file->buffer, &virtualDisk[index], BLOCKSIZE );

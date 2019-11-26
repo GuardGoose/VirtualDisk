@@ -369,7 +369,9 @@ char **mylistdir(char *path){
       currentDirIndex = tempIndex;
       free(pathCopy);
       return myList;
-    }else{
+    }
+	else
+	{
       free(pathCopy);
       return NULL;
     }
@@ -434,7 +436,6 @@ MyFILE * myfopen(char * name,const char mode)
     file->pos = 0;
     file->writing = 1;
     file->filelength = currentDir->filelength;
-    //printf("when opened file length is %d\n", file->filelength);
     strcpy(file->mode, &mode);
     file->blockno = index;
     memmove(&file->buffer, &virtualDisk[index], BLOCKSIZE );
